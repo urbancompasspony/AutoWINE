@@ -1,0 +1,101 @@
+#!/bin/bash
+
+# Script de Auto Criar Wineprefixos usando Dialog - 1.0
+#
+# FLUXOGRAMA
+#                    INÍCIO
+#                 +-----------+
+#                 |Nome Prefix|--Esc--->---+
+#      .--------> +----Ok-----+            |
+#      `--Cancel--|Arquitetura|--Esc--->---+
+#      .--------> +----Ok-----+            |     +----------+
+#      `--Cancel--|  Atalho   |--Esc--->---+---> |  Sai do  |
+#                 +----Ok-----+                  | Programa |
+#                 | Execução  |                  +----------+
+#                 +-----------+
+#                      FIM
+#
+
+# --backtitle "$BACKTITLE" # Ciano no canto superior esquerdo
+# --title 'MSG BOX' # Azul escuro no centro, título um pouco abaixo
+# INTRO # Para criar texto em caixas de informação
+
+# Memorizando: SIM=0, NÃO=1
+
+# Variáveis:
+wd="$( cd "$(dirname "$0")" ; pwd -P )"
+data=$(date +"%Y_%m_%d_%H:%M")
+
+BACKTITLE="AutoWINE - Dialog 1.0"
+TITLEA="Execução"
+TITLEB="Configuração"
+
+proxima=primeira
+
+# função principal
+function init {
+
+winepathto="/mnt/games/WINE/wineprefix/$name"
+
+# Criando diretório, definindo winearch e abrindo winecfg
+WINEPREFIX="$winepathto" WINEARCH=$wineaarch winecfg &> /dev/null
+
+[ "$short" = "sim" ] && cp "$wd/AutoWINE/WINE" "/mnt/games/WINE/$name" && sed -i "s/NOMEGAME/$name/g" /mnt/games/WINE/$name
+
+}
+
+# loop principal
+while : ; do
+    
+    case "$proxima" in
+        primeira)
+            proxima=name
+            dialog --backtitle "$BACKTITLE" --title "$TITLEA" --sleep 2 --infobox 'Iniciando AutoWINE...' 8 40
+            ;;
+        name)
+            anterior=primeira
+            proxima=arch
+            name=$(dialog --stdout --title "$TITLEB" --backtitle "$BACKTITLE" --title 'AutoWINE 1.0' --inputbox "Nome do WinePrefix, sem espaços:" 8 40 "new_wineprefix-"$data"")
+            ;;
+        arch)
+            anterior=name
+            proxima=short
+            dialog --title "$TITLEB" --backtitle "$BACKTITLE" --yesno "Deseja manter a arquitetura x64?" 8 40
+            if [ $? = 0 ]; then
+              wineaarch="win64"
+            else
+              wineaarch="win32"
+            fi
+            ;;
+        short)
+            anterior=arch
+            proxima=final
+            dialog --cr-wrap --title "$TITLEB" --backtitle "$BACKTITLE" --yesno "Deseja criar atalho?" 8 40
+            if [ $? = 0 ]; then
+              short="sim"
+            else
+              short="nao"
+            fi
+            ;;
+        final)
+            dialog --cr-wrap --sleep 3 --title "$TITLEB" --backtitle "$BACKTITLE" --infobox "
+                Os dados informados foram
+                Nome do Prefixo: $name
+                Arquitetura $wineaarch
+                Criar Atalho? $short
+                " 12 45
+                # --and-widget --yesno 'Você aceita os Termos da Licença?' 8 30
+            init
+            break
+            ;;
+        *)
+            echo "Janela desconhecida '$proxima'."
+            echo Abortando programa...
+            exit
+    esac
+    
+    retorno=$?
+    [ $retorno -eq 1   ] && proxima=$anterior   # cancelar
+    [ $retorno -eq 255 ] && break               # Esc
+
+done
