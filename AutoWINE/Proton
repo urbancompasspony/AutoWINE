@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# Verificar configurações do Wineprefix "pfx" com winecfg antes de executar!
+
+# ================ # Painel de Controle # ================= #
+
+function init {
+
+    folderA # Executar da pasta Main WINE
+    #folderB # Executar da 'Área de Trabalho'
+
+    export PROTONPREFIX=$wd"/wineprefix/pfx-"
+    export GAMEPATH="/drive_c/PASTA/ATÉ/EXE/"
+    export GAMEEXE="Executável.exe"
+
+    #protonpar # Habilitar parâmetros do Proton.
+    #vulkan # Parâmetros específicos do Vulkan.
+    #gpu # Parâmetros específicos para alguns games.
+
+    protoncustom=Proton6.3 # Defina aqui qual versão do Proton utilizar!
+    
+    exeP # Não Editar.
+    
+}
+
+#========================================================== #
+
+# Flags de Execução para Referencias #
+
+# 
+
+#========================================================== #
+
+# Constante do Script
+
+# Funções
+function folderA {
+    wd="$( cd "$(dirname "$0")" ; pwd -P )"
+}
+
+function folderB {
+    wd="/mnt/games/WINE" # De qualquer(*) local!
+# *Se for mal montado, poderá ter problemas na execução.
+}
+
+function protonpar {
+    export PROTON_USE_VKD3D=1 # Para usar DirectX12 baseado em Vulkan - Exclusivo Proton/Codeweavers
+    #export PROTON_USE_WINED3D # Para usar OpenGL em vez de DirectX 10/11
+    #export PROTON_NO_D9VK=1 # Desabilitar D9VK e usar DirectX9
+    #export PROTON_NO_ESYNC=1 # Desabilitar ESync
+    #export PROTON_NO_D3D11=1 # Desabilitar DirectX11 e usar DirectX9
+}
+
+function vulkan {
+    export DXVK_HUD=devinfo,fps # devinfo,fps,frametimes # Define o HUD do DXVK e o que será exibido. Tudo por padrão.
+    export DXVK_LOG_LEVEL=none # Nivel de Log de Eventos, padrão nada.
+}
+
+function gpu {
+    export LD_PRELOAD="libpthread.so.0 libGL.so.1"
+    export __GL_THREADED_OPTIMIZATIONS=1
+    export __GL_YIELD=NOTHING
+}
+
+function exeP {
+    export STEAM_COMPAT_CLIENT_INSTALL_PATH="/home/$USER/.steam"
+    export STEAM_COMPAT_DATA_PATH="$PROTONPREFIX"
+    cd "$PROTONPREFIX"
+    $wd/wine/$protoncustom/proton run "$PROTONPREFIX"/"$GAMEPATH"/"$GAMEEXE"
+}
+
+# Inicio do Script!
+
+init
+
+# Fim #
